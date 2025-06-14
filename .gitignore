@@ -1,0 +1,37 @@
+# stuff we dont want to commit
+main           # the actual program
+main_debug     # the debug version (for when u mess up)
+*.o            # object files (theyre messy)
+*.out          # output files (theyre also messy)
+*.exe          # windows stuff (cuz windows)
+
+# ide stuff (cuz were not animals)
+.vscode/*
+!.vscode/tasks.json    # keep this, its useful
+!.vscode/launch.json   # this too
+.idea/                 # jetbrains stuff (if ur into that)
+*.swp                  # vims way of saying "i was here"
+*~                    # backup files (we dont need these)
+
+# debug stuff (for when things go wrong)
+*.dSYM/        # macos debug symbols (but we dont care)
+*.su           # stack usage (who needs this?)
+*.idb          # more debug stuff
+*.pdb          # even more debug stuff
+
+# compiled stuff (its all temporary anyway)
+*.o            # object files (theyre like temporary tattoos)
+*.obj          # more object files (cuz why not)
+*.so           # shared objects (theyre not that special)
+*.dll          # windows dlls (windows things)
+*.a            # static libraries (theyre static, get it?)
+*.lib          # more libraries (cuz one wasnt enough)
+
+# executables (theyre like pokemon, u gotta build em all)
+*.exe          # windows executables
+*.out          # unix executables
+
+# temporary stuff (like my exs phone number)
+*.log          # log files (nobody reads these)
+*.tmp          # temporary files (theyre temporary)
+*.temp         # more temporary files (cuz one wasnt enough) 
