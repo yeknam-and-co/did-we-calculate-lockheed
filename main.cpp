@@ -76,24 +76,24 @@ std::string preprocess(std::string equation) { // this function preprocesses the
 }
 
 double power() {
-    bool negative = false; // we are not negative
-    if (peek() == "-") { // if the current token is a negative sign
-        negative = true; // we are negative
-        advance(); // move to the next token
-    }
-
     double result = factor(); // evaluate the factor
+    
     while (current != tokens.end() && peek() == "^") { // while we are not at the end of the tokens and the current token is a power
         advance(); // move to the next token
         double right = factor(); // evaluate the factor
         result = std::pow(result, right); // raise the result to the power of the right factor
     }
 
-    return negative ? -result : result; // if we are negative, return the negative result, otherwise return the result
+    return result; // return the result
 }
 
 
 double factor() {
+    if (current != tokens.end() && peek() == "-") { // handle negative numbers
+        advance(); // move past the negative sign
+        return -factor(); // recursively handle the negative factor
+    }
+    
     if (peek() == "(") { // if the current token is an opening parenthesis
         advance(); // move to the next token
         double result = expr(); // evaluate the expression
@@ -140,46 +140,63 @@ double expr() {
     return result; // return the result
 }
 
+double round_half_away_from_zero(double value, int decimals) {
+    double factor = std::pow(10.0, decimals);
+    if (value > 0)
+        return std::floor(value * factor + 0.5) / factor;
+    else
+        return std::ceil(value * factor - 0.5) / factor;
+}
+
 std::string format(double val) {
-    std::ostringstream out; // create a string stream so basically a string like a = "123"
-    val = std::round(val * 1000) / 1000; // round the value to 3 decimal places
+    val = round_half_away_from_zero(val, 3);
+    if (std::abs(val) < 1e-9) val = 0.0; // avoid -0
 
-    if (std::abs(val - std::round(val)) < 1e-9) { // if the value is an integer
-        out << static_cast<int>(std::round(val)); // convert the value to an integer
-    } else { // if the value is not an integer
-        out << std::fixed << std::setprecision(3) << val; // convert the value to a string with 3 decimal places
-
-        std::string s = out.str(); // convert the string stream to a string because low level shit
-
-        while (s.back() == '0') s.pop_back(); // remove the trailing zeros
-        if (s.back() == '.') s.pop_back(); // remove the trailing decimal point
-        return s; // return the string
+    std::ostringstream out;
+    if (std::abs(val - std::round(val)) < 1e-9) {
+        out << static_cast<int>(std::round(val));
+    } else {
+        out << std::fixed << std::setprecision(3) << val;
+        std::string s = out.str();
+        while (s.back() == '0') s.pop_back();
+        if (s.back() == '.') s.pop_back();
+        
+        if (s.length() > 2 && s[0] == '0' && s[1] == '.') {
+            s = s.substr(1);
+        } else if (s.length() > 3 && s[0] == '-' && s[1] == '0' && s[2] == '.') {
+            s = "-" + s.substr(2);
+        }
+        
+        return s;
     }
-
-    return out.str(); // return the string
+    return out.str();
 }
 
 void solve() {
-    std::string equation; // we are at the beginning of the equation
-    std::getline(std::cin, equation); // get the equation
+    std::string equation;
+    std::getline(std::cin, equation);
     
-    size_t eq_pos = equation.find('='); // find the position of the equal sign
-    std::string left = equation.substr(0, eq_pos); // get the left side of the equation
-    std::string right = equation.substr(eq_pos + 1); // get the right side of the equation
+    size_t eq_pos = equation.find('=');
+    std::string left = equation.substr(0, eq_pos);
+    std::string right = equation.substr(eq_pos + 1);
+    right.erase(0, right.find_first_not_of(" \t"));
+    right.erase(right.find_last_not_of(" \t") + 1);
     
-    tokens = tokenize(preprocess(left)); // tokenize the left side of the equation
-    current = tokens.begin(); // set the current token to the first token like a pointer
+    tokens = tokenize(preprocess(left));
+    current = tokens.begin();
     
-    double result = expr(); // evaluate the left side of the equation
-    double answer = std::stod(right); // convert the right side of the equation to a double
+    double result = expr();
+    double answer = std::stod(right);
 
-    double rounded_result = std::round(result * 1000) / 1000;
-    double rounded_answer = std::round(answer * 1000) / 1000;
+    double rounded_result = round_half_away_from_zero(result, 3);
+    double rounded_answer = round_half_away_from_zero(answer, 3);
+    if (std::abs(rounded_result) < 1e-9) rounded_result = 0.0;
+    if (std::abs(rounded_answer) < 1e-9) rounded_answer = 0.0;
 
-    if (std::abs(rounded_result - rounded_answer) < 1e-6) { // if the result is correct
-        std::cout << "Correct\n"; // print correct
-    } else { // if the result is incorrect
-        std::cout << format(rounded_result) << '\n'; // print the result
+    if (std::abs(rounded_result - rounded_answer) < 1e-6) {
+        std::cout << "Correct\n";
+    } else {
+        std::cout << format(rounded_result) << '\n';
     }
 }
 
